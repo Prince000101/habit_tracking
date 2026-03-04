@@ -16,16 +16,18 @@ function HabitModal({ habit, onSave, onClose }) {
     const save = async () => {
         if (!title.trim()) return;
         setSaving(true);
-        const payload = { title: title.trim(), category, note };
-        let data;
+        // Include frequency (required NOT NULL field in schema)
+        const payload = { title: title.trim(), category, note: note || '', frequency: 'Daily' };
+        let data, err;
         if (habit) {
             const res = await supabase.from('habits').update(payload).eq('id', habit.id).select().single();
-            data = res.data;
+            data = res.data; err = res.error;
         } else {
             const res = await supabase.from('habits').insert(payload).select().single();
-            data = res.data;
+            data = res.data; err = res.error;
         }
         setSaving(false);
+        if (err) { alert('Error saving habit: ' + err.message); return; }
         onSave(data, !!habit);
     };
 
@@ -87,9 +89,15 @@ export default function HabitManager() {
     };
 
     const handleDelete = async (id) => {
+        if (!window.confirm('Delete this habit and all its logs?')) return;
         setDeleting(id);
-        await supabase.from('habit_logs').delete().eq('habit_id', id);
-        await supabase.from('habits').delete().eq('id', id);
+        // habit_logs uses ON DELETE CASCADE so only need to delete habit
+        const { error } = await supabase.from('habits').delete().eq('id', id);
+        if (error) {
+            alert('Delete failed: ' + error.message);
+            setDeleting(null);
+            return;
+        }
         setHabits(prev => prev.filter(h => h.id !== id));
         setDeleting(null);
     };
