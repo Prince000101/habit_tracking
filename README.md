@@ -1,101 +1,117 @@
 <div align="center">
   <img src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png" width="80" alt="Notion-style Logo" />
   <h1>HabitOS 📝</h1>
-  <p>A beautiful, Notion-inspired Habit & Goal Tracker built with React and Supabase.</p>
+  <p>A beautiful, Notion-inspired personal Habit & Goal Tracker built with React and Supabase.</p>
 
   [![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
   [![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)](https://reactjs.org/)
   [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-  [![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
+  [![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
 </div>
+
+---
+
+HabitOS is a highly-polished personal dashboard designed to mimic the aesthetic and functionality of Notion. It moves away from cramped tables into a breathing, responsive environment for tracking daily habits, long-term goals, and visual progress.
+
+## 📸 Screenshots
+
+| Desktop Dashboard | Progress Tracking | Mobile Experience |
+| :---: | :---: | :---: |
+| <img src="docs/assets/dashboard.png" width="800" /> | <img src="docs/assets/progress.png" width="800" /> | <img src="docs/assets/mobile.png" width="300" /> |
 
 ---
 
 ## ✨ Features
 
-HabitOS was designed from the ground up to mimic the clean, highly-functional aesthetic of **Notion**. 
-
-### 📅 Daily Check-in
-* **Smooth Interactions:** Tick off habits with satisfying bounce animations.
-* **Progress Rings:** An SVG circular progress ring automatically calculates your daily completion percentage.
-* **Streak Tracking:** Flame badges (🔥) automatically calculate your current active streak based on historical logs.
-
-### 📋 Habit Library
-* **Full CRUD Management:** Easily add, edit, or delete habits in a clean modal.
-* **Categorization:** Color-coded tags (Health, Fitness, Productivity, etc.) to keep your routines organized.
-* **Auto-stats:** The table automatically calculates your total days completed and current active streak for every habit.
-
-### 📊 Progress Dashboard
-* **Data Visualization:** A beautiful monthly area chart tracks your day-over-day completion rates.
-* **Activity Heatmap:** A GitHub-style 90-day heatmap block shows your consistency at a glance.
-* **Summary Cards:** Quick stats showing Today's %, Total Completions, and Best Active Streak.
-
-### 🏆 Long-Term Goals
-* **Goal Cards:** Track overarching milestones (e.g., "Read 12 Books", "Save $5000").
-* **Custom Colors:** Assign custom hex colors to goal progress rings.
-* **Inline Controls:** Quickly increment or decrement progress with `+ / -` buttons directly on the cards.
-
-### 📱 Fully Responsive
-* **Desktop:** Spacious layout with a persistent Notion-style left sidebar.
-* **Mobile:** The sidebar gracefully collapses into a bottom emoji-tab navigation bar for true app-like usability on phones.
+* **Daily Check-in:** Tick off habits with satisfying bounce animations. A dynamic SVG ring calculates your daily completion percentage.
+* **Progress Dashboard:** A beautiful monthly area chart tracks your day-over-day completion rates alongside a GitHub-style 90-day heatmap block.
+* **Habit Library:** Full CRUD management for habits with color-coded tags (Health, Fitness, Productivity) and auto-calculated total completions and active streak counts 🔥.
+* **Long-Term Goals:** Track overarching milestones with custom hex colors and inline `+ / -` progress incrementing.
+* **Global Password Lock:** The app is protected by a lightweight PIN lock screen (`admin123` by default) that persists via `localStorage`, so your personal data remains private when sharing the link or leaving your device open.
+* **Fully Responsive:** Features a persistent left sidebar on desktop that seamlessly collapses into a sticky, app-like bottom navigation bar on mobile phones. On mobile, data tables transform into beautiful stacked cards.
 
 ---
 
-## 🛠️ Technology Stack
+## 🚀 How to Set This Up for Yourself
 
-* **Frontend Framework:** [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
-* **Database & Auth:** [Supabase](https://supabase.com/) (PostgreSQL)
-* **Styling:** Custom Vanilla CSS Design System (Utilizing CSS Variables for a centralized Notion theme)
-* **Icons:** [Lucide React](https://lucide.dev/)
-* **Charts:** [Recharts](https://recharts.org/)
-* **Date Utilities:** [date-fns](https://date-fns.org/)
-* **Hosting:** [Vercel](https://vercel.com/) 
+This app is designed to be forked and hosted personally. Follow these steps to get your own instance running for free.
 
----
+### Step 1: Set up Supabase (Database)
+1. Create a free account and new project at [Supabase](https://supabase.com/).
+2. Go to the **SQL Editor** in your Supabase dashboard.
+3. Paste and run the following full schema to create the necessary tables:
 
-## 🚀 Getting Started (Local Development)
+```sql
+-- 1. Create the tables
+CREATE TABLE habits (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT DEFAULT 'Other',
+    frequency TEXT DEFAULT 'Daily',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Prince000101/habit_tracking.git
-   cd habit_tracking
-   ```
+CREATE TABLE habit_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    habit_id UUID REFERENCES habits(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    completed BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(habit_id, date)
+);
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+CREATE TABLE goals (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    target NUMERIC NOT NULL,
+    current NUMERIC DEFAULT 0,
+    unit TEXT DEFAULT '',
+    color TEXT DEFAULT '#3b82f6',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-3. **Set up Supabase:**
-   * Create a new project on [Supabase](https://supabase.com/).
-   * Run the SQL statements found in `schema.sql` (if provided, or create `habits`, `habit_logs`, and `goals` tables) in your Supabase SQL Editor.
-   * Add the following columns if missing:
-     ```sql
-     ALTER TABLE habits ADD COLUMN IF NOT EXISTS note TEXT DEFAULT '';
-     ALTER TABLE goals  ADD COLUMN IF NOT EXISTS note TEXT DEFAULT '';
-     ```
+-- 2. Add the note columns (optional but recommended)
+ALTER TABLE habits ADD COLUMN IF NOT EXISTS note TEXT DEFAULT '';
+ALTER TABLE goals  ADD COLUMN IF NOT EXISTS note TEXT DEFAULT '';
 
-4. **Environment Variables:**
-   Create a `.env` file in the root directory and add your Supabase keys:
+-- 3. Set up Row Level Security (Required by Supabase)
+ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
+
+-- 4. Create wide-open policies for this personal app
+CREATE POLICY "Enable all for all users" ON habits FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all for all users" ON habit_logs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all for all users" ON goals FOR ALL USING (true) WITH CHECK (true);
+```
+4. Go to **Project Settings > API** and copy your `Project URL` and `anon public key`.
+
+### Step 2: Fork & Configure
+1. Fork this repository to your own GitHub account.
+2. If running locally, clone it and create a `.env` file in the root directory:
    ```env
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
+3. Run `npm install` and `npm run dev` to test it locally at `http://localhost:5173`.
+4. *Important Note on Security:* The default password to get past the lock screen is `admin123`. You can change this by modifying the `handleLogin` function inside `src/App.jsx`.
 
-5. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:5173` in your browser.
+### Step 3: Deploy to Vercel (Free Hosting)
+1. Create a free account at [Vercel](https://vercel.com/) and log in with your GitHub.
+2. Click **Add New > Project** and select your newly forked `habit_tracking` repository.
+3. Open the **Environment Variables** section before deploying.
+4. Add the same two variables from Step 2:
+   - Name: `VITE_SUPABASE_URL` | Value: *(Your URL)*
+   - Name: `VITE_SUPABASE_ANON_KEY` | Value: *(Your Key)*
+5. Click **Deploy**. Vercel will automatically build the React Vite app and give you a live HTTPS link! 
+
+You can now save this link to your phone's home screen for quick daily access.
 
 ---
 
-## 💡 Future Ideas / Roadmap
-
-To take HabitOS to the next level, here are features planned for the future:
-
-* **User Authentication:** Allow multiple users to register and keep private habit boards using Supabase Auth.
-* **Habit Frequency:** Track weekly or specific-day habits (e.g., "Gym on Mon/Wed/Fri") rather than just daily.
-* **PWA Support:** Add a Web Manifest and Service Worker so users can install HabitOS to their iOS/Android home screens as a native-feeling app.
-* **Dark/Light Mode Toggle:** Currently defaults to a beautiful dark mode; add a light mode variant using CSS variables.
-* **Rich Text Notes:** Allow Notion-style rich text inside habit/goal notes.
+## 🛠️ Technology Stack
+* Frontend Framework: React 18 + Vite
+* Database & API: Supabase (PostgreSQL)
+* Styling: Custom Vanilla CSS (Notion Theme Variables)
+* Charts: Recharts
+* Deployment: Vercel
