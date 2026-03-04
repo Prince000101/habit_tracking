@@ -15,10 +15,12 @@ HabitOS is a highly-polished personal dashboard designed to mimic the aesthetic 
 
 ## 📸 Screenshots
 
-| Desktop View 1 | Desktop View 2 |
-| :---: | :---: |
-| <img src="docs/assets/laptop.png" width="800" /> | <img src="docs/assets/laptop2.png" width="800" /> |
+### Desktop Views
+<img src="docs/assets/laptop.png" width="800" />
+<br/><br/>
+<img src="docs/assets/laptop2.png" width="800" />
 
+### Mobile Views
 | Mobile View 1 | Mobile View 2 |
 | :---: | :---: |
 | <img src="docs/assets/phone1.jpeg" width="300" /> | <img src="docs/assets/phjone2.jpeg" width="300" /> |
