@@ -1,14 +1,101 @@
-import TrackerGrid from './components/TrackerGrid';
+import { useState } from 'react';
+import { format } from 'date-fns';
+import DailyCheckin from './components/DailyCheckin';
+import HabitManager from './components/HabitManager';
+import Progress from './components/Progress';
+import Goals from './components/Goals';
 import './App.css';
 
-function App() {
+const NAV = [
+  { id: 'daily', label: 'Daily Check-in', icon: '✅', emoji: '📅' },
+  { id: 'habits', label: 'Habits', icon: '📝', emoji: '📋' },
+  { id: 'progress', label: 'Progress', icon: '📈', emoji: '📊' },
+  { id: 'goals', label: 'Goals', icon: '🎯', emoji: '🏆' },
+];
+
+function Sidebar({ active, onNav }) {
+  const today = format(new Date(), 'EEEE, MMM d');
   return (
-    <div className="app-container spreadsheet-mode">
-      <main className="main-content">
-        <TrackerGrid />
-      </main>
+    <nav className="sidebar">
+      <div className="sidebar-brand">
+        <div className="sidebar-brand-icon">📓</div>
+        <span className="sidebar-brand-name">HabitOS</span>
+      </div>
+
+      <div className="sidebar-section-label">Workspace</div>
+      {NAV.map(item => (
+        <button
+          key={item.id}
+          className={`nav-item ${active === item.id ? 'active' : ''}`}
+          onClick={() => onNav(item.id)}
+        >
+          <span className="nav-item-icon">{item.icon}</span>
+          {item.label}
+        </button>
+      ))}
+
+      <div className="sidebar-footer">
+        <div className="sidebar-date-block">
+          <div className="sidebar-date-label">Today</div>
+          <div className="sidebar-date-value">{today}</div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function MobileNav({ active, onNav }) {
+  return (
+    <div className="mobile-bottom-nav">
+      <div className="mobile-nav-items">
+        {NAV.map(item => (
+          <button
+            key={item.id}
+            className={`mobile-nav-item ${active === item.id ? 'active' : ''}`}
+            onClick={() => onNav(item.id)}
+          >
+            <span style={{ fontSize: 22 }}>{item.emoji}</span>
+            {item.label.split(' ')[0]}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
-export default App;
+const PAGE_META = {
+  daily: { icon: '📅', title: 'Daily Check-in', subtitle: "Track today's habits. One habit at a time." },
+  habits: { icon: '📋', title: 'Habits', subtitle: 'Manage your complete habit library.' },
+  progress: { icon: '📊', title: 'Progress', subtitle: 'Visualize consistency over time.' },
+  goals: { icon: '🏆', title: 'Goals', subtitle: 'Long-term targets powered by daily habits.' },
+};
+
+export default function App() {
+  const [page, setPage] = useState('daily');
+  const meta = PAGE_META[page];
+
+  return (
+    <div className="app-shell">
+      <Sidebar active={page} onNav={setPage} />
+
+      <main className="main-content">
+        <div className="page-header">
+          <div className="page-title-row">
+            <span className="page-icon">{meta.icon}</span>
+            <h1 className="page-title">{meta.title}</h1>
+          </div>
+          <p className="page-subtitle">{meta.subtitle}</p>
+        </div>
+
+        <div className="page-body">
+          {page === 'daily' && <DailyCheckin />}
+          {page === 'habits' && <HabitManager />}
+          {page === 'progress' && <Progress />}
+          {page === 'goals' && <Goals />}
+        </div>
+      </main>
+
+      <MobileNav active={page} onNav={setPage} />
+    </div>
+  );
+}

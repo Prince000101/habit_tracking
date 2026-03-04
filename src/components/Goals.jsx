@@ -1,192 +1,211 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { Plus, Edit2, Trash2, X, Loader } from 'lucide-react';
 import './Goals.css';
+
+const COLORS = [
+    { label: 'Blue', value: '#4f6bed' },
+    { label: 'Purple', value: '#9b59d0' },
+    { label: 'Green', value: '#2ecc71' },
+    { label: 'Orange', value: '#e67e22' },
+    { label: 'Red', value: '#e74c3c' },
+    { label: 'Yellow', value: '#f1c40f' },
+];
+
+function GoalRing({ current, target, color }) {
+    const pct = target > 0 ? Math.min(Math.round((current / target) * 100), 100) : 0;
+    const r = 38, c = 2 * Math.PI * r;
+    const offset = c - (pct / 100) * c;
+    return (
+        <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+            <circle cx="48" cy="48" r={r} fill="none" stroke={color} strokeWidth="8"
+                strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
+                transform="rotate(-90 48 48)"
+                style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1)' }}
+            />
+            <text x="48" y="46" textAnchor="middle" fill="#e8e8e5" fontSize="15" fontWeight="800" fontFamily="Inter,sans-serif">{pct}%</text>
+            <text x="48" y="60" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="Inter,sans-serif">{current}/{target}</text>
+        </svg>
+    );
+}
+
+function GoalModal({ goal, onSave, onClose }) {
+    const [title, setTitle] = useState(goal?.title || '');
+    const [target, setTarget] = useState(goal?.target || 30);
+    const [current, setCurrent] = useState(goal?.current || 0);
+    const [unit, setUnit] = useState(goal?.unit || 'days');
+    const [color, setColor] = useState(goal?.color || '#4f6bed');
+    const [note, setNote] = useState(goal?.note || '');
+    const [saving, setSaving] = useState(false);
+
+    const save = async () => {
+        if (!title.trim()) return;
+        setSaving(true);
+        const payload = { title: title.trim(), target: Number(target), current: Number(current), unit, color, note };
+        let data;
+        if (goal) {
+            const r = await supabase.from('goals').update(payload).eq('id', goal.id).select().single();
+            data = r.data;
+        } else {
+            const r = await supabase.from('goals').insert(payload).select().single();
+            data = r.data;
+        }
+        setSaving(false);
+        onSave(data, !!goal);
+    };
+
+    return (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+            <div className="modal-box">
+                <div className="modal-close-row">
+                    <h2 className="modal-title">{goal ? 'Edit Goal' : 'New Goal'}</h2>
+                    <button className="icon-btn" onClick={onClose}><X size={18} /></button>
+                </div>
+
+                <div className="form-group">
+                    <label className="form-label">Goal Title</label>
+                    <input className="notion-input" placeholder="e.g. Read 12 books this year" value={title} onChange={e => setTitle(e.target.value)} autoFocus />
+                </div>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label className="form-label">Target</label>
+                        <input className="notion-input" type="number" min="1" value={target} onChange={e => setTarget(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Unit</label>
+                        <input className="notion-input" placeholder="days, books, km…" value={unit} onChange={e => setUnit(e.target.value)} />
+                    </div>
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Current Progress</label>
+                    <input className="notion-input" type="number" min="0" value={current} onChange={e => setCurrent(e.target.value)} />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Color</label>
+                    <div className="color-picker">
+                        {COLORS.map(c => (
+                            <button
+                                key={c.value}
+                                className={`color-dot ${color === c.value ? 'selected' : ''}`}
+                                style={{ background: c.value }}
+                                onClick={() => setColor(c.value)}
+                                title={c.label}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Notes (optional)</label>
+                    <input className="notion-input" placeholder="Why is this goal important?" value={note} onChange={e => setNote(e.target.value)} />
+                </div>
+
+                <div className="modal-actions">
+                    <button className="notion-btn notion-btn-ghost" onClick={onClose}>Cancel</button>
+                    <button className="notion-btn notion-btn-primary" onClick={save} disabled={saving || !title.trim()}>
+                        {saving ? <Loader size={14} className="spin" /> : null} {goal ? 'Save Changes' : 'Create Goal'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function Goals() {
     const [goals, setGoals] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isAdding, setIsAdding] = useState(false);
+    const [modal, setModal] = useState(null);
+    const [deleting, setDeleting] = useState(null);
 
-    // New Goal Form
-    const [newTitle, setNewTitle] = useState('');
-    const [newTarget, setNewTarget] = useState(10);
-    const [newUnit, setNewUnit] = useState('');
-    const [newColor, setNewColor] = useState('var(--accent-primary)');
-
-    useEffect(() => {
-        fetchGoals();
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        const { data } = await supabase.from('goals').select('*').order('created_at', { ascending: true });
+        setGoals(data || []);
+        setLoading(false);
     }, []);
 
-    const fetchGoals = async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('goals')
-                .select('*')
-                .order('created_at', { ascending: false });
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-            if (error) throw error;
-            setGoals(data || []);
-        } catch (error) {
-            console.error('Error fetching goals:', error.message);
-        } finally {
-            setLoading(false);
-        }
+    const handleSave = (saved, isEdit) => {
+        setGoals(prev => isEdit ? prev.map(g => g.id === saved.id ? saved : g) : [...prev, saved]);
+        setModal(null);
     };
 
-    const addGoal = async (e) => {
-        e.preventDefault();
-        if (!newTitle.trim() || !newUnit.trim()) return;
-
-        try {
-            const { data, error } = await supabase
-                .from('goals')
-                .insert([{
-                    title: newTitle,
-                    target: newTarget,
-                    current: 0,
-                    unit: newUnit,
-                    color: newColor
-                }])
-                .select();
-
-            if (error) throw error;
-            setGoals([data[0], ...goals]);
-            setIsAdding(false);
-            setNewTitle('');
-            setNewUnit('');
-            setNewTarget(10);
-        } catch (error) {
-            console.error('Error adding goal:', error.message);
-        }
+    const handleDelete = async (id) => {
+        setDeleting(id);
+        await supabase.from('goals').delete().eq('id', id);
+        setGoals(prev => prev.filter(g => g.id !== id));
+        setDeleting(null);
     };
 
-    const deleteGoal = async (id) => {
-        if (!window.confirm('Delete this goal permanently?')) return;
-        try {
-            const { error } = await supabase.from('goals').delete().eq('id', id);
-            if (error) throw error;
-            setGoals(goals.filter(g => g.id !== id));
-        } catch (error) {
-            console.error('Error deleting goal:', error.message);
-        }
+    const updateProgress = async (goal, delta) => {
+        const newCurrent = Math.max(0, Math.min(goal.target, goal.current + delta));
+        setGoals(prev => prev.map(g => g.id === goal.id ? { ...g, current: newCurrent } : g));
+        await supabase.from('goals').update({ current: newCurrent }).eq('id', goal.id);
     };
+
+    if (loading) return <div className="loading-spinner"><Loader size={18} className="spin" /> Loading goals...</div>;
 
     return (
-        <div className="goals-dashboard">
-            <header className="goals-header">
-                <div>
-                    <h3>Long-term Goals</h3>
-                    <p className="subtitle">Connect your daily habits to your macro objectives.</p>
-                </div>
-                <button className="btn-primary" onClick={() => setIsAdding(!isAdding)}>
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                        {isAdding ? (
-                            <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>
-                        ) : (
-                            <><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></>
-                        )}
-                    </svg>
-                    {isAdding ? 'Cancel' : 'New Goal'}
+        <div className="goals-page animate-in">
+            <div className="goals-toolbar">
+                <p className="goals-count">{goals.length} goal{goals.length !== 1 ? 's' : ''} set</p>
+                <button className="notion-btn notion-btn-primary" onClick={() => setModal('new')}>
+                    <Plus size={16} /> New Goal
                 </button>
-            </header>
+            </div>
 
-            {isAdding && (
-                <form className="add-habit-form glass-panel" onSubmit={addGoal} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', padding: '1.5rem', marginBottom: '1rem' }}>
-                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <input
-                            type="text"
-                            placeholder="Goal Title (e.g., Read 24 Books)"
-                            value={newTitle}
-                            onChange={(e) => setNewTitle(e.target.value)}
-                            className="form-input"
-                            autoFocus
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <input
-                            type="number"
-                            min="1"
-                            placeholder="Target Number"
-                            value={newTarget}
-                            onChange={(e) => setNewTarget(Number(e.target.value))}
-                            className="form-input"
-                            title="Target amount"
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <input
-                            type="text"
-                            placeholder="Unit (e.g., books, km, $)"
-                            value={newUnit}
-                            onChange={(e) => setNewUnit(e.target.value)}
-                            className="form-input"
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <select value={newColor} onChange={(e) => setNewColor(e.target.value)} className="form-select">
-                            <option value="var(--accent-primary)">Indigo</option>
-                            <option value="var(--accent-secondary)">Violet</option>
-                            <option value="var(--accent-success)">Emerald</option>
-                            <option value="var(--accent-warning)">Amber</option>
-                            <option value="var(--accent-danger)">Rose</option>
-                        </select>
-                    </div>
-                    <button type="submit" className="btn-primary" style={{ height: '42px', alignSelf: 'flex-end' }}>Create</button>
-                </form>
-            )}
-
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>Loading goals...</div>
-            ) : goals.length === 0 ? (
-                <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
-                    No long-term goals set. Click "New Goal" to get started!
+            {goals.length === 0 ? (
+                <div className="empty-state">
+                    <div className="empty-state-icon">🏆</div>
+                    <div className="empty-state-title">No goals yet</div>
+                    <div className="empty-state-sub">Set meaningful targets and track your progress towards them.</div>
                 </div>
             ) : (
                 <div className="goals-grid">
                     {goals.map(goal => {
-                        const target = Number(goal.target) || 1;
-                        const current = Number(goal.current) || 0;
-                        let percentage = Math.round((current / target) * 100);
-                        if (percentage > 100) percentage = 100;
-
+                        const pct = goal.target > 0 ? Math.min(Math.round((goal.current / goal.target) * 100), 100) : 0;
                         return (
-                            <div key={goal.id} className="goal-card glass-panel" style={{ position: 'relative' }}>
-                                <button
-                                    className="btn-icon danger"
-                                    onClick={() => deleteGoal(goal.id)}
-                                    style={{ position: 'absolute', top: '1rem', right: '1rem', opacity: 0.5 }}
-                                    title="Delete Goal"
-                                >
-                                    🗑️
-                                </button>
-
-                                <div className="goal-header" style={{ paddingRight: '2rem' }}>
-                                    <h4>{goal.title}</h4>
-                                    <div className="goal-badge" style={{ backgroundColor: `${goal.color}33`, color: goal.color }}>
-                                        {percentage}%
+                            <div key={goal.id} className="goal-card notion-card">
+                                <div className="goal-card-header">
+                                    <div className="goal-card-actions">
+                                        <button className="icon-btn" onClick={() => setModal(goal)} title="Edit"><Edit2 size={14} /></button>
+                                        <button className="icon-btn danger" onClick={() => handleDelete(goal.id)} disabled={deleting === goal.id} title="Delete">
+                                            {deleting === goal.id ? <Loader size={14} className="spin" /> : <Trash2 size={14} />}
+                                        </button>
                                     </div>
                                 </div>
-
-                                <div className="goal-progress-wrapper" style={{ marginTop: 'auto' }}>
-                                    <div className="goal-progress-bg">
-                                        <div
-                                            className="goal-progress-fill"
-                                            style={{ width: `${percentage}%`, backgroundColor: goal.color }}
-                                        ></div>
-                                    </div>
-                                    <div className="goal-stats">
-                                        <span>{current} {goal.unit}</span>
-                                        <span>{target} {goal.unit}</span>
+                                <div className="goal-card-body">
+                                    <GoalRing current={goal.current} target={goal.target} color={goal.color || '#4f6bed'} />
+                                    <div className="goal-info">
+                                        <h3 className="goal-title">{goal.title}</h3>
+                                        {goal.note && <p className="goal-note">{goal.note}</p>}
+                                        <div className="goal-stats">
+                                            <span>{goal.current} / {goal.target} {goal.unit}</span>
+                                        </div>
+                                        <div className="progress-bar" style={{ marginTop: '0.75rem' }}>
+                                            <div className="progress-fill" style={{ width: `${pct}%`, background: goal.color || '#4f6bed' }} />
+                                        </div>
+                                        {/* Inline progress controls */}
+                                        <div className="goal-controls">
+                                            <button className="goal-ctrl-btn" onClick={() => updateProgress(goal, -1)}>−</button>
+                                            <span className="goal-ctrl-label">{pct}% complete</span>
+                                            <button className="goal-ctrl-btn" onClick={() => updateProgress(goal, 1)}>+</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
+            )}
+
+            {modal && (
+                <GoalModal
+                    goal={modal === 'new' ? null : modal}
+                    onSave={handleSave}
+                    onClose={() => setModal(null)}
+                />
             )}
         </div>
     );

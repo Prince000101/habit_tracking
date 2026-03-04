@@ -1,179 +1,205 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { format, eachDayOfInterval, startOfMonth, endOfMonth, subMonths, parseISO } from 'date-fns';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Flame, Loader, TrendingUp } from 'lucide-react';
 import './Progress.css';
 
+const MONTHS_BACK = 3;
+
 export default function Progress() {
-    const [stats, setStats] = useState({
-        activeHabits: 0,
-        completedToday: 0,
-        longestStreak: 0,
-        completionRate: 0
-    });
-    const [weeklyData, setWeeklyData] = useState([]);
-    const [monthlyConsistency, setMonthlyConsistency] = useState([]);
+    const [habits, setHabits] = useState([]);
+    const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        calculateProgressMetrics();
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        const start = format(startOfMonth(subMonths(new Date(), MONTHS_BACK)), 'yyyy-MM-dd');
+        const [{ data: h }, { data: l }] = await Promise.all([
+            supabase.from('habits').select('*').order('created_at'),
+            supabase.from('habit_logs').select('habit_id, completed_date').gte('completed_date', start),
+        ]);
+        setHabits(h || []);
+        setLogs(l || []);
+        setLoading(false);
     }, []);
 
-    const calculateProgressMetrics = async () => {
-        try {
-            setLoading(true);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-            // 1. Fetch habits
-            const { data: habits, error: habitsError } = await supabase.from('habits').select('*');
-            if (habitsError) throw habitsError;
+    // Build daily chart data for the current month
+    const currentMonth = new Date();
+    const daysList = useMemo(() => eachDayOfInterval({
+        start: startOfMonth(currentMonth),
+        end: endOfMonth(currentMonth),
+    }), []);
 
-            // 2. Fetch all logs for the last 30 days
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
+    const chartData = useMemo(() => {
+        if (!habits.length) return [];
+        return daysList.map(day => {
+            const ds = format(day, 'yyyy-MM-dd');
+            const done = logs.filter(l => l.completed_date === ds).length;
+            const pct = habits.length ? Math.round((done / habits.length) * 100) : 0;
+            return { label: format(day, 'd'), date: ds, done, pct };
+        });
+    }, [daysList, logs, habits]);
 
-            const { data: logs, error: logsError } = await supabase
-                .from('habit_logs')
-                .select('*')
-                .gte('completed_date', dateStr);
-            if (logsError) throw logsError;
+    // Per-habit stats
+    const habitStats = useMemo(() => habits.map(h => {
+        const hLogs = logs.filter(l => l.habit_id === h.id);
+        const total = hLogs.length;
+        const daysInPeriod = MONTHS_BACK * 30;
+        const rate = Math.round((total / daysInPeriod) * 100);
 
-            // Calculate active habits
-            const activeHabits = habits.length;
-
-            // Calculate completed today
-            const todayStr = new Date().toISOString().split('T')[0];
-            const completedToday = logs.filter(l => l.completed_date === todayStr).length;
-
-            // Calculate Weekly Data (Last 7 days)
-            const week = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const isoDate = d.toISOString().split('T')[0];
-                const dayName = d.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 2);
-
-                const completionsThatDay = logs.filter(l => l.completed_date === isoDate).length;
-                const rate = activeHabits > 0 ? Math.round((completionsThatDay / activeHabits) * 100) : 0;
-
-                week.push({ day: dayName, rate, completions: completionsThatDay });
-            }
-
-            // Overall completion rate for the period
-            const totalExpected = activeHabits * 30; // approx
-            const overallRate = totalExpected > 0 ? Math.round((logs.length / totalExpected) * 100) : 0;
-
-            // Dumb longest streak calculation for demo purposes (max single habit streak)
-            // In a real app this requires complex consecutive date matching per habit ID
-            let maxStreak = 0;
-            const logsByHabit = {};
-            logs.forEach(log => {
-                if (!logsByHabit[log.habit_id]) logsByHabit[log.habit_id] = [];
-                logsByHabit[log.habit_id].push(log.completed_date);
-            });
-            // Simplified max streak visualization setup
-            if (logs.length > 0) maxStreak = Math.min(activeHabits > 0 ? Math.floor(logs.length / activeHabits) + 1 : 0, 30);
-
-            // consistency array (30 days)
-            const consistencies = [];
-            for (let i = 29; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const cCount = logs.filter(l => l.completed_date === d.toISOString().split('T')[0]).length;
-                consistencies.push({
-                    active: cCount > 0 && cCount >= (activeHabits * 0.5), // "active" if > 50% done
-                    day: i + 1
-                });
-            }
-
-            setStats({
-                activeHabits,
-                completedToday,
-                longestStreak: maxStreak,
-                completionRate: overallRate > 100 ? 100 : overallRate
-            });
-            setWeeklyData(week);
-            setMonthlyConsistency(consistencies);
-
-        } catch (error) {
-            console.error('Error calculating metrics:', error.message);
-        } finally {
-            setLoading(false);
+        // streak
+        const dates = [...new Set(hLogs.map(l => l.completed_date))].sort().reverse();
+        let streak = 0;
+        const today = format(new Date(), 'yyyy-MM-dd');
+        let check = today;
+        for (const d of dates) {
+            if (d === check) {
+                streak++;
+                const prev = new Date(check);
+                prev.setDate(prev.getDate() - 1);
+                check = format(prev, 'yyyy-MM-dd');
+            } else break;
         }
-    };
 
-    if (loading) {
-        return <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Crunching the numbers...</div>;
-    }
+        let best = 0, run = 0, last = '';
+        for (const d of [...dates].reverse()) {
+            if (!last) { run = 1; last = d; }
+            else {
+                const expected = new Date(last);
+                expected.setDate(expected.getDate() + 1);
+                if (d === format(expected, 'yyyy-MM-dd')) run++;
+                else run = 1;
+            }
+            last = d;
+            if (run > best) best = run;
+        }
+
+        return { ...h, total, rate: Math.min(rate, 100), streak, best };
+    }), [habits, logs]);
+
+    // Today's global pct
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const todayDone = logs.filter(l => l.completed_date === todayStr).length;
+    const todayPct = habits.length ? Math.round((todayDone / habits.length) * 100) : 0;
+
+    // Heatmap: last 90 days
+    const heatmapDays = useMemo(() => {
+        const end = new Date();
+        const start = new Date(); start.setDate(start.getDate() - 89);
+        return eachDayOfInterval({ start, end }).map(day => {
+            const ds = format(day, 'yyyy-MM-dd');
+            const done = logs.filter(l => l.completed_date === ds).length;
+            const level = habits.length ? Math.round((done / habits.length) * 4) : 0;
+            return { ds, day: format(day, 'd'), level };
+        });
+    }, [logs, habits]);
+
+    if (loading) return <div className="loading-spinner"><Loader size={18} className="spin" /> Loading progress...</div>;
 
     return (
-        <div className="progress-dashboard">
-            <header className="progress-header">
-                <div>
-                    <h3>Your Progress</h3>
-                    <p className="subtitle">Visualize your consistency and track overall performance.</p>
-                </div>
-            </header>
-
-            <div className="stats-grid">
-                <div className="stat-card glass-panel">
-                    <div className="stat-icon text-accent">📝</div>
-                    <div className="stat-info">
-                        <span className="stat-value">{stats.activeHabits}</span>
-                        <span className="stat-label">Active Habits</span>
+        <div className="progress-page animate-in">
+            {/* Summary cards */}
+            <div className="prog-summary-row">
+                <div className="prog-summary-card notion-card">
+                    <div className="prog-sc-icon" style={{ background: 'rgba(79,107,237,0.12)', color: '#7c9ef8' }}>📅</div>
+                    <div className="prog-sc-value">{todayPct}%</div>
+                    <div className="prog-sc-label">Today's completion</div>
+                    <div className="progress-bar" style={{ marginTop: '0.75rem' }}>
+                        <div className="progress-fill" style={{ width: `${todayPct}%` }} />
                     </div>
                 </div>
-                <div className="stat-card glass-panel">
-                    <div className="stat-icon text-success">✨</div>
-                    <div className="stat-info">
-                        <span className="stat-value">{stats.completedToday}</span>
-                        <span className="stat-label">Completed Today</span>
-                    </div>
+                <div className="prog-summary-card notion-card">
+                    <div className="prog-sc-icon" style={{ background: 'rgba(46,204,113,0.12)', color: '#4ade80' }}>✅</div>
+                    <div className="prog-sc-value">{logs.filter(l => l.completed_date === todayStr).length}</div>
+                    <div className="prog-sc-label">Done today</div>
                 </div>
-                <div className="stat-card glass-panel">
-                    <div className="stat-icon text-warning">🔥</div>
-                    <div className="stat-info">
-                        <span className="stat-value">{stats.longestStreak}</span>
-                        <span className="stat-label">Estimated Streak</span>
-                    </div>
+                <div className="prog-summary-card notion-card">
+                    <div className="prog-sc-icon" style={{ background: 'rgba(246,113,34,0.12)', color: '#fb923c' }}>🔥</div>
+                    <div className="prog-sc-value">{Math.max(...habitStats.map(h => h.streak), 0)}</div>
+                    <div className="prog-sc-label">Best active streak</div>
                 </div>
-                <div className="stat-card glass-panel">
-                    <div className="stat-icon text-primary">📈</div>
-                    <div className="stat-info">
-                        <span className="stat-value">{stats.completionRate}%</span>
-                        <span className="stat-label">30-Day Completion</span>
-                    </div>
+                <div className="prog-summary-card notion-card">
+                    <div className="prog-sc-icon" style={{ background: 'rgba(155,89,208,0.12)', color: '#c084fc' }}>📊</div>
+                    <div className="prog-sc-value">{logs.length}</div>
+                    <div className="prog-sc-label">Total completions</div>
                 </div>
             </div>
 
-            <div className="charts-container">
-                <div className="chart-card glass-panel">
-                    <h4>Weekly Completion</h4>
-                    <div className="bar-chart">
-                        {weeklyData.map((data, index) => (
-                            <div key={index} className="bar-wrapper" title={`${data.rate}% completed`}>
-                                <div
-                                    className="bar"
-                                    style={{ height: `${data.rate}%`, opacity: data.rate / 100 || 0.1 }}
-                                ></div>
-                                <span className="bar-label">{data.day}</span>
-                            </div>
-                        ))}
-                    </div>
+            {/* Area Chart */}
+            <div className="prog-section notion-card">
+                <div className="prog-section-header">
+                    <TrendingUp size={16} />
+                    <h3>{format(currentMonth, 'MMMM yyyy')} — Daily Completion %</h3>
                 </div>
+                <div className="prog-chart-area">
+                    <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#4f6bed" stopOpacity={0.5} />
+                                    <stop offset="95%" stopColor="#4f6bed" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} domain={[0, 100]} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} />
+                            <Tooltip
+                                contentStyle={{ background: '#252525', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '13px' }}
+                                formatter={(v) => [`${v}%`, 'Completed']}
+                                labelFormatter={(l) => `Day ${l}`}
+                            />
+                            <Area type="monotone" dataKey="pct" stroke="#4f6bed" strokeWidth={2.5} fill="url(#grad1)" dot={false} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
 
-                <div className="chart-card glass-panel">
-                    <h4>Consistency Overview</h4>
-                    <p className="chart-desc">
-                        A quick heatmap of your performance over the last 30 days.
-                    </p>
-                    <div className="consistency-streak">
-                        {monthlyConsistency.map((dot, i) => (
-                            <div
-                                key={i}
-                                className={`streak-dot ${dot.active ? 'active' : ''}`}
-                                title={`Day ${dot.day}`}
-                            ></div>
-                        ))}
-                    </div>
+            {/* Heatmap */}
+            <div className="prog-section notion-card">
+                <div className="prog-section-header">
+                    <span>🗓️</span>
+                    <h3>Last 90 Days — Activity Heatmap</h3>
+                </div>
+                <div className="heatmap-grid">
+                    {heatmapDays.map(d => (
+                        <div key={d.ds} className={`heatmap-cell level-${d.level}`} data-tooltip={`${d.ds}: ${d.level === 0 ? 'No habits' : `Level ${d.level}`}`} />
+                    ))}
+                </div>
+                <div className="heatmap-legend">
+                    <span>Less</span>
+                    {[0, 1, 2, 3, 4].map(l => <div key={l} className={`heatmap-cell level-${l}`} />)}
+                    <span>More</span>
+                </div>
+            </div>
+
+            {/* Per-habit breakdown */}
+            <div className="prog-section notion-card">
+                <div className="prog-section-header">
+                    <span>📝</span>
+                    <h3>Habit Breakdown — Last {MONTHS_BACK} Months</h3>
+                </div>
+                <div className="habit-breakdown-list">
+                    {habitStats.map(h => (
+                        <div key={h.id} className="hb-row">
+                            <div className="hb-meta">
+                                <span className="hb-title">{h.title}</span>
+                                <div className="hb-stats">
+                                    <span>{h.total} days done</span>
+                                    {h.streak > 0 && <span className="streak-badge"><Flame size={12} />{h.streak} day streak</span>}
+                                    {h.best > h.streak && <span className="tag tag-purple">Best: {h.best} days</span>}
+                                </div>
+                            </div>
+                            <div className="hb-bar-col">
+                                <div className="progress-bar">
+                                    <div className="progress-fill" style={{ width: `${h.rate}%`, background: h.rate >= 80 ? '#2ecc71' : h.rate >= 50 ? '#4f6bed' : '#e67e22' }} />
+                                </div>
+                                <span className="hb-rate">{h.rate}%</span>
+                            </div>
+                        </div>
+                    ))}
+                    {habits.length === 0 && <div className="empty-state"><div className="empty-state-icon">📊</div><div className="empty-state-title">No habit data yet</div></div>}
                 </div>
             </div>
         </div>

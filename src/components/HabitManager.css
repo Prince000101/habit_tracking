@@ -1,0 +1,157 @@
+.habit-manager {
+    max-width: 900px;
+}
+
+.hm-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.hm-count {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.hm-table-wrapper {
+    background: var(--notion-surface);
+    border: 1px solid var(--notion-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    overflow-x: auto;
+}
+
+.hm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.hm-table thead th {
+    padding: 0.875rem 1.25rem;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--notion-border);
+    white-space: nowrap;
+}
+
+.hm-row {
+    transition: background var(--transition-fast);
+}
+
+.hm-row:hover {
+    background: var(--notion-hover);
+}
+
+.hm-row:not(:last-child) td {
+    border-bottom: 1px solid var(--notion-border);
+}
+
+.hm-row td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+}
+
+.hm-habit-name {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hm-title {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.hm-note {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hm-stat {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.hm-no-streak {
+    color: var(--text-tertiary);
+}
+
+.hm-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.icon-btn:hover {
+    background: var(--notion-hover);
+    color: var(--text-primary);
+}
+
+.icon-btn.danger:hover {
+    background: rgba(231, 76, 60, 0.12);
+    color: var(--accent-red);
+}
+
+.modal-close-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.modal-close-row .modal-title {
+    margin-bottom: 0;
+}
+
+.streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(246, 113, 34, 0.12);
+    color: #fb923c;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 600px) {
+
+    .hm-table thead th:nth-child(3),
+    .hm-row td:nth-child(3) {
+        display: none;
+    }
+}

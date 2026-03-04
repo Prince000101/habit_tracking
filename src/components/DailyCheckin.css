@@ -1,140 +1,196 @@
-.daily-checkin {
+.daily-page {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
+    gap: 1.25rem;
+    max-width: 720px;
 }
 
-.checkin-header {
+/* Summary */
+.daily-summary {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 2rem;
+    background: var(--notion-surface);
+    border: 1px solid var(--notion-border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem 2rem;
+    gap: 1.5rem;
 }
 
-.checkin-header h3 {
+.daily-greeting h2 {
     font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
+    font-weight: 700;
     color: var(--text-primary);
+    margin-bottom: 0.25rem;
 }
 
-.checkin-header .subtitle {
+.daily-date {
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 14px;
+    margin-bottom: 0.75rem;
 }
 
-.progress-ring-container {
-    position: relative;
+.daily-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.completion-ring {
+    flex-shrink: 0;
+}
+
+/* Progress bar row */
+.daily-progress-bar-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-}
-
-.progress-ring {
-    transform: rotate(-90deg);
-}
-
-.progress-ring__circle {
-    transition: stroke-dashoffset 0.5s ease-in-out;
-}
-
-.progress-ring__circle.fg {
-    stroke-linecap: round;
-}
-
-.progress-text {
-    position: absolute;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.habits-list {
-    display: flex;
-    flex-direction: column;
     gap: 0.75rem;
 }
 
-.habit-card {
+.daily-pct-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 36px;
+    text-align: right;
+}
+
+/* Habit List */
+.habit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--notion-surface);
+    border: 1px solid var(--notion-border);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem;
+    overflow: hidden;
+}
+
+.habit-row {
     display: flex;
     align-items: center;
-    padding: 1rem 1.25rem;
-    gap: 1.25rem;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: background var(--transition-fast);
+    animation: fade-slide-up 0.3s ease both;
+    user-select: none;
 }
 
-.habit-card:hover {
-    transform: translateX(4px);
-    background: var(--bg-hover);
+.habit-row:hover {
+    background: var(--notion-hover);
 }
 
-.habit-card.completed {
-    opacity: 0.7;
-}
-
-.habit-card.completed .habit-title {
+.habit-row.done .habit-title {
     text-decoration: line-through;
     color: var(--text-tertiary);
 }
 
-.checkbox {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid var(--border-color);
+.habit-checkbox {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--notion-border-strong);
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-fast);
+    color: transparent;
     flex-shrink: 0;
+    transition: all var(--transition-bounce);
+    background: rgba(0, 0, 0, 0.15);
 }
 
-.checkbox.checked {
-    background-color: var(--accent-success);
-    border-color: var(--accent-success);
+.habit-checkbox.checked {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
     color: white;
-    animation: checkbox-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.checkbox svg {
-    width: 14px;
-    height: 14px;
+    animation: check-bounce 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .habit-info {
     display: flex;
-    flex-direction: column;
-    flex-grow: 1;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
 }
 
 .habit-title {
-    font-size: 1.05rem;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
-    transition: color var(--transition-fast);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color var(--transition-fast), text-decoration var(--transition-fast);
 }
 
-.habit-category {
-    font-size: 0.75rem;
+.streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(246, 113, 34, 0.12);
+    color: #fb923c;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* Add form */
+.habit-add-form {
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-top: 1px solid var(--notion-border);
+    margin-top: 0.25rem;
+}
+
+.habit-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: var(--radius-md);
     color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 0.2rem;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+    border: 2px dashed transparent;
 }
 
-@keyframes checkbox-pop {
-    0% {
-        transform: scale(0.8);
+.habit-add-btn:hover {
+    background: var(--notion-hover);
+    color: var(--text-primary);
+    border-color: var(--notion-border-strong);
+}
+
+/* Spinner */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .daily-summary {
+        flex-direction: column-reverse;
+        align-items: center;
+        text-align: center;
+        padding: 1.25rem;
     }
 
-    50% {
-        transform: scale(1.1);
-    }
-
-    100% {
-        transform: scale(1);
+    .daily-meta {
+        justify-content: center;
     }
 }

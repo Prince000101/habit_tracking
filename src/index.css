@@ -1,64 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
 :root {
-  /* Color Palette - Premium Dark Mode Default */
-  --bg-primary: #0f1115;
-  --bg-secondary: #16181d;
-  --bg-panel: rgba(30, 33, 40, 0.6);
-  --bg-hover: rgba(255, 255, 255, 0.05);
+  /* Notion-inspired Color Palette */
+  --notion-bg: #191919;
+  --notion-sidebar: #202020;
+  --notion-surface: #252525;
+  --notion-hover: rgba(255, 255, 255, 0.055);
+  --notion-border: rgba(255, 255, 255, 0.06);
+  --notion-border-strong: rgba(255, 255, 255, 0.12);
 
-  --text-primary: #f0f2f5;
-  --text-secondary: #9ba1a6;
+  --text-primary: #e8e8e5;
+  --text-secondary: #9b9a97;
   --text-tertiary: #6b7280;
+  --text-placeholder: #484848;
 
-  --accent-primary: #6366f1;
-  /* Indigo */
-  --accent-secondary: #8b5cf6;
-  /* Violet */
-  --accent-success: #10b981;
-  --accent-danger: #ef4444;
-  --accent-warning: #f59e0b;
-
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-highlight: rgba(255, 255, 255, 0.15);
-
-  /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
-  /* Shadows & Glass */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.3);
-  --backdrop-blur: blur(12px);
-
-  /* Animations */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* Accent Colors */
+  --accent-blue: #4f6bed;
+  --accent-purple: #9b59d0;
+  --accent-green: #2ecc71;
+  --accent-orange: #e67e22;
+  --accent-red: #e74c3c;
+  --accent-yellow: #f1c40f;
+  --accent-primary: #4f6bed;
+  --accent-success: #2ecc71;
+  --accent-danger: #e74c3c;
 
   /* Layout */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --sidebar-width: 260px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+  --transition-bounce: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 
-* {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-primary);
+  background-color: var(--notion-bg);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   overflow-x: hidden;
+  font-size: 15px;
 }
 
 a {
@@ -74,37 +84,370 @@ button {
   outline: none;
 }
 
-/* Glassmorphism Utilities */
-.glass-panel {
-  background: var(--bg-panel);
-  backdrop-filter: var(--backdrop-blur);
-  -webkit-backdrop-filter: var(--backdrop-blur);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+input,
+textarea,
+select {
+  font-family: inherit;
 }
 
-.glass-panel:hover {
-  border-color: var(--border-highlight);
-  box-shadow: var(--shadow-lg);
-  transition: all var(--transition-normal);
-}
-
-/* Scrollbar styling */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Utility Classes */
+.notion-card {
+  background: var(--notion-surface);
+  border: 1px solid var(--notion-border);
+  border-radius: var(--radius-md);
+}
+
+.notion-card-hover {
+  background: var(--notion-surface);
+  border: 1px solid var(--notion-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.notion-card-hover:hover {
+  background: var(--notion-hover);
+  border-color: var(--notion-border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag-blue {
+  background: rgba(79, 107, 237, 0.15);
+  color: #7c9ef8;
+}
+
+.tag-purple {
+  background: rgba(155, 89, 208, 0.15);
+  color: #c084fc;
+}
+
+.tag-green {
+  background: rgba(46, 204, 113, 0.15);
+  color: #4ade80;
+}
+
+.tag-orange {
+  background: rgba(230, 126, 34, 0.15);
+  color: #fb923c;
+}
+
+.tag-red {
+  background: rgba(231, 76, 60, 0.15);
+  color: #f87171;
+}
+
+.tag-yellow {
+  background: rgba(241, 196, 15, 0.15);
+  color: #fbbf24;
+}
+
+.notion-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.notion-btn-primary {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.notion-btn-primary:hover {
+  background: #3d59d8;
+}
+
+.notion-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--notion-border);
+}
+
+.notion-btn-ghost:hover {
+  background: var(--notion-hover);
+  color: var(--text-primary);
+  border-color: var(--notion-border-strong);
+}
+
+.notion-btn-danger {
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--accent-red);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.notion-btn-danger:hover {
+  background: rgba(231, 76, 60, 0.2);
+}
+
+.notion-input {
+  background: var(--notion-surface);
+  border: 1px solid var(--notion-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.notion-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(79, 107, 237, 0.2);
+}
+
+.notion-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.notion-select {
+  background: var(--notion-surface);
+  border: 1px solid var(--notion-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+.notion-select:focus {
+  border-color: var(--accent-blue);
+}
+
+.notion-select option {
+  background: var(--notion-surface);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fade-in 0.15s ease;
+}
+
+.modal-box {
+  background: var(--notion-surface);
+  border: 1px solid var(--notion-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+  animation: scale-in 0.15s ease;
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent-blue);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--notion-border);
+  margin: 1rem 0;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes check-bounce {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(0.8);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-in {
+  animation: fade-slide-up 0.3s ease forwards;
+}
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: var(--text-tertiary);
+  gap: 0.75rem;
+  font-size: 14px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty-state-sub {
+  font-size: 0.875rem;
+  max-width: 280px;
+}
+
+/* Tooltip */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  border: 1px solid var(--notion-border-strong);
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
 }
