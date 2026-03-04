@@ -42,16 +42,20 @@ function GoalModal({ goal, onSave, onClose }) {
     const save = async () => {
         if (!title.trim()) return;
         setSaving(true);
-        const payload = { title: title.trim(), target: Number(target), current: Number(current), unit, color, note };
-        let data;
+        // Omit 'note' entirely to prevent schema errors if the column hasn't been added
+        const payload = { title: title.trim(), target, unit, current, color };
+        let data, err;
+
         if (goal) {
-            const r = await supabase.from('goals').update(payload).eq('id', goal.id).select().single();
-            data = r.data;
+            const res = await supabase.from('goals').update(payload).eq('id', goal.id).select().single();
+            data = res.data; err = res.error;
         } else {
-            const r = await supabase.from('goals').insert(payload).select().single();
-            data = r.data;
+            const res = await supabase.from('goals').insert(payload).select().single();
+            data = res.data; err = res.error;
         }
+
         setSaving(false);
+        if (err) { alert('Error saving goal: ' + err.message); return; }
         onSave(data, !!goal);
     };
 

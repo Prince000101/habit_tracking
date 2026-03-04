@@ -235,3 +235,50 @@
     padding-left: 2.75rem;
   }
 }
+/* ===== AUTH SCREEN ===== */
+.auth-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background: var(--notion-bg);
+  padding: 1rem;
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 360px;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+}
+
+.auth-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.auth-box h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: -0.5rem;
+}
+
+.auth-box p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.auth-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  font-weight: 500;
+  align-self: flex-start;
+  margin-top: -0.5rem;
+}

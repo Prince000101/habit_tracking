@@ -8,9 +8,9 @@ import './App.css';
 
 const NAV = [
   { id: 'daily', label: 'Daily Check-in', icon: '✅', emoji: '📅' },
-  { id: 'habits', label: 'Habits', icon: '📝', emoji: '📋' },
   { id: 'progress', label: 'Progress', icon: '📈', emoji: '📊' },
   { id: 'goals', label: 'Goals', icon: '🎯', emoji: '🏆' },
+  { id: 'habits', label: 'Habits', icon: '📝', emoji: '📋' },
 ];
 
 function Sidebar({ active, onNav }) {
@@ -71,7 +71,45 @@ const PAGE_META = {
 };
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('habitos_auth') === 'true');
+  const [passInput, setPassInput] = useState('');
+  const [passError, setPassError] = useState(false);
   const [page, setPage] = useState('daily');
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // Simple password lock - change this to whatever you want
+    if (passInput === 'admin123') {
+      setIsAuthenticated(true);
+      localStorage.setItem('habitos_auth', 'true');
+    } else {
+      setPassError(true);
+      setPassInput('');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-screen">
+        <form className="auth-box notion-card" onSubmit={handleLogin}>
+          <div className="auth-icon">🔒</div>
+          <h2>HabitOS Is Locked</h2>
+          <p>Please enter your access key.</p>
+          <input
+            type="password"
+            className="notion-input"
+            placeholder="Password..."
+            value={passInput}
+            onChange={e => { setPassInput(e.target.value); setPassError(false); }}
+            autoFocus
+          />
+          {passError && <span className="auth-error">Incorrect password.</span>}
+          <button type="submit" className="notion-btn notion-btn-primary" style={{ width: '100%' }}>Unlock</button>
+        </form>
+      </div>
+    );
+  }
+
   const meta = PAGE_META[page];
 
   return (

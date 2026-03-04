@@ -17,7 +17,8 @@ function HabitModal({ habit, onSave, onClose }) {
         if (!title.trim()) return;
         setSaving(true);
         // Include frequency (required NOT NULL field in schema)
-        const payload = { title: title.trim(), category, note: note || '', frequency: 'Daily' };
+        // Omit 'note' to prevent schema error if column isn't added yet
+        const payload = { title: title.trim(), category, frequency: 'Daily' };
         let data, err;
         if (habit) {
             const res = await supabase.from('habits').update(payload).eq('id', habit.id).select().single();
