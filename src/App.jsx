@@ -72,22 +72,76 @@ const PAGE_META = {
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('habitos_auth') === 'true');
+
+  // Environment Variables with fallbacks
+  const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || 'admin123';
+  const MAX_ATTEMPTS = parseInt(import.meta.env.VITE_MAX_ATTEMPTS || '5', 10);
+  const BLOCK_HOURS = parseInt(import.meta.env.VITE_BLOCK_HOURS || '5', 10);
+
+  // Check if currently blocked
+  const checkBlockStatus = () => {
+    const blockUntil = localStorage.getItem('habitos_block_until');
+    if (!blockUntil) return false;
+
+    if (new Date().getTime() < parseInt(blockUntil, 10)) {
+      return true; // Still blocked
+    } else {
+      // Block expired
+      localStorage.removeItem('habitos_block_until');
+      localStorage.removeItem('habitos_attempts');
+      return false;
+    }
+  };
+
+  const [isBlocked, setIsBlocked] = useState(checkBlockStatus);
+  const [attempts, setAttempts] = useState(() => parseInt(localStorage.getItem('habitos_attempts') || '0', 10));
+
   const [passInput, setPassInput] = useState('');
   const [passError, setPassError] = useState(false);
   const [page, setPage] = useState('daily');
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Simple password lock - change this to whatever you want
-    if (passInput === 'admin123') {
+    if (isBlocked) return;
+
+    if (passInput === APP_PASSWORD) {
       setIsAuthenticated(true);
       localStorage.setItem('habitos_auth', 'true');
+      localStorage.removeItem('habitos_attempts'); // Reset on success
     } else {
-      setPassError(true);
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      localStorage.setItem('habitos_attempts', newAttempts.toString());
       setPassInput('');
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const blockTime = new Date().getTime() + (BLOCK_HOURS * 60 * 60 * 1000);
+        localStorage.setItem('habitos_block_until', blockTime.toString());
+        setIsBlocked(true);
+      } else {
+        setPassError(true);
+      }
     }
   };
 
+  // Blocked Screen
+  if (isBlocked) {
+    const blockUntil = new Date(parseInt(localStorage.getItem('habitos_block_until'), 10));
+    return (
+      <div className="auth-screen">
+        <div className="auth-box notion-card" style={{ border: '1px solid #f87171' }}>
+          <div className="auth-icon">🛑</div>
+          <h2 style={{ color: '#f87171' }}>Access Blocked</h2>
+          <p>Too many failed attempts.</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
+            Try again after: <br /><strong>{blockUntil.toLocaleString()}</strong>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Login Screen
   if (!isAuthenticated) {
     return (
       <div className="auth-screen">
@@ -103,7 +157,7 @@ export default function App() {
             onChange={e => { setPassInput(e.target.value); setPassError(false); }}
             autoFocus
           />
-          {passError && <span className="auth-error">Incorrect password.</span>}
+          {passError && <span className="auth-error">Incorrect password. Attempt {attempts} of {MAX_ATTEMPTS}</span>}
           <button type="submit" className="notion-btn notion-btn-primary" style={{ width: '100%' }}>Unlock</button>
         </form>
       </div>

@@ -27,7 +27,8 @@ HabitOS is a highly-polished personal dashboard designed to mimic the aesthetic 
 * **Progress Dashboard:** A beautiful monthly area chart tracks your day-over-day completion rates alongside a GitHub-style 90-day heatmap block.
 * **Habit Library:** Full CRUD management for habits with color-coded tags (Health, Fitness, Productivity) and auto-calculated total completions and active streak counts 🔥.
 * **Long-Term Goals:** Track overarching milestones with custom hex colors and inline `+ / -` progress incrementing.
-* **Global Password Lock:** The app is protected by a lightweight PIN lock screen (`admin123` by default) that persists via `localStorage`, so your personal data remains private when sharing the link or leaving your device open.
+* **Global Password Lock:** The app is protected by a lightweight PIN lock screen that persists via `localStorage`, so your personal data remains private when sharing the link or leaving your device open. 
+* **Brute-Force Deterrent:** Includes an IP/Device lockout mechanism that blocks access for a configurable number of hours if a user repeatedly enters the wrong password.
 * **Fully Responsive:** Features a persistent left sidebar on desktop that seamlessly collapses into a sticky, app-like bottom navigation bar on mobile phones. On mobile, data tables transform into beautiful stacked cards.
 
 ---
@@ -88,21 +89,30 @@ CREATE POLICY "Enable all for all users" ON goals FOR ALL USING (true) WITH CHEC
 
 ### Step 2: Fork & Configure
 1. Fork this repository to your own GitHub account.
-2. If running locally, clone it and create a `.env` file in the root directory:
+2. If running locally, clone it and create a `.env` file in the root directory. You can set your own custom password and lockout rules here:
    ```env
+   # Database keys
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   
+   # Security
+   VITE_APP_PASSWORD=MySecretPassword123
+   VITE_MAX_ATTEMPTS=5
+   VITE_BLOCK_HOURS=5
    ```
 3. Run `npm install` and `npm run dev` to test it locally at `http://localhost:5173`.
-4. *Important Note on Security:* The default password to get past the lock screen is `admin123`. You can change this by modifying the `handleLogin` function inside `src/App.jsx`.
+4. *Important Note on Security:* The app uses a simple client-side layer of protection with the `VITE_APP_PASSWORD`. If an attacker guesses incorrectly 5 times (or your custom `VITE_MAX_ATTEMPTS` variable), their browser will be blocked for 5 hours.
 
 ### Step 3: Deploy to Vercel (Free Hosting)
 1. Create a free account at [Vercel](https://vercel.com/) and log in with your GitHub.
 2. Click **Add New > Project** and select your newly forked `habit_tracking` repository.
 3. Open the **Environment Variables** section before deploying.
-4. Add the same two variables from Step 2:
+4. Add *ALL* the variables from Step 2:
    - Name: `VITE_SUPABASE_URL` | Value: *(Your URL)*
    - Name: `VITE_SUPABASE_ANON_KEY` | Value: *(Your Key)*
+   - Name: `VITE_APP_PASSWORD` | Value: `YourSecurePassword`
+   - Name: `VITE_MAX_ATTEMPTS` | Value: `5`
+   - Name: `VITE_BLOCK_HOURS` | Value: `5`
 5. Click **Deploy**. Vercel will automatically build the React Vite app and give you a live HTTPS link! 
 
 You can now save this link to your phone's home screen for quick daily access.
