@@ -124,10 +124,10 @@
   color: var(--text-primary);
 }
 
-/* ===== MAIN CONTENT ===== */
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -165,7 +165,6 @@
   padding: 1.75rem 2.5rem;
   flex: 1;
   width: 100%;
-  overflow-y: auto;
 }
 
 /* ===== MOBILE NAV ===== */
@@ -220,11 +219,11 @@
   }
 
   .page-header {
-    padding: 1.5rem 1.25rem 0.75rem;
+    padding: 1.5rem 1.5rem 0.75rem;
   }
 
-  .page-body {
-    padding: 1.25rem;
+  .page-icon {
+    font-size: 1.5rem;
   }
 
   .page-title {
@@ -232,9 +231,17 @@
   }
 
   .page-subtitle {
-    padding-left: 2.75rem;
+    font-size: 13px;
+    padding-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .page-body {
+    padding: 1.25rem 1.25rem 6rem;
+    /* Extra padding for bottom nav */
   }
 }
+
 /* ===== AUTH SCREEN ===== */
 .auth-screen {
   display: flex;

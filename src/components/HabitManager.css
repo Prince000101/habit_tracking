@@ -148,10 +148,98 @@
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
 
-    .hm-table thead th:nth-child(3),
+    .hm-table,
+    .hm-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .hm-table td {
+        display: block;
+    }
+
+    .hm-table thead {
+        display: none;
+    }
+
+    .hm-table-wrapper {
+        border: none;
+        background: transparent;
+    }
+
+    .hm-row {
+        background: var(--notion-surface);
+        border: 1px solid var(--notion-border);
+        border-radius: var(--radius-lg);
+        margin-bottom: 0.75rem;
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "title title"
+            "category category"
+            "stats actions";
+        gap: 0.5rem;
+        position: relative;
+    }
+
+    .hm-row:not(:last-child) td {
+        border-bottom: none;
+    }
+
+    .hm-row td {
+        padding: 0;
+        border: none;
+    }
+
+    /* Cell 1: Name and Note */
+    .hm-row td:nth-child(1) {
+        grid-area: title;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Cell 2: Category */
+    .hm-row td:nth-child(2) {
+        grid-area: category;
+        align-self: start;
+    }
+
+    /* Cell 3: Total Done (Hide or show differently) */
     .hm-row td:nth-child(3) {
         display: none;
+    }
+
+    /* Cell 4: Streak */
+    .hm-row td:nth-child(4) {
+        grid-area: stats;
+        font-size: 13px;
+        padding-top: 0.875rem;
+        border-top: 1px solid var(--notion-border);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Cell 5: Actions */
+    .hm-row td:nth-child(5) {
+        grid-area: actions;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.5rem;
+        padding-top: 0.875rem;
+        border-top: 1px solid var(--notion-border);
+        margin-top: 0.5rem;
+    }
+
+    .hm-title {
+        font-size: 16px;
+    }
+
+    .streak-badge {
+        font-size: 13px;
     }
 }
