@@ -1,0 +1,17 @@
+<div class="migration-card">
+    <div class="migration-card__header">
+        <h3>{ title }</h3>
+        <span class="badge">{ status }</span>
+    </div>
+    <div class="migration-card__body">
+        <p>{ description }</p>
+        <div class="migration-card__meta">
+            <span>Created: { created_at | date }</span>
+            <span>By: { author }</span>
+        </div>
+    </div>
+    <div class="migration-card__actions">
+        <button (click)="onEdit()">Edit</button>
+        <button (click)="onDelete()">Delete</button>
+    </div>
+</div>
