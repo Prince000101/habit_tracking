@@ -1,13 +1,13 @@
-## Session
+## Validator
 
 ### Overview
-The session module handles all session operations. It integrates with the core pipeline and provides extensible hooks for customization.
+The validator module handles all validator operations. It integrates with the core pipeline and provides extensible hooks for customization.
 
 ### Usage
 ```python
-from src.docs import SessionManager
+from src.docs import ValidatorManager
 
-manager = SessionManager(config={
+manager = ValidatorManager(config={
     'timeout': 30,
     'retries': 3,
     'cache_ttl': 600,
